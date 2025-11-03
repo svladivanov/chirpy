@@ -13,8 +13,23 @@ func (cfg *apiConfig) handlerGetChirps(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	authorID := uuid.Nil
+	authorIDString := r.URL.Query().Get("author_id")
+	if authorIDString != "" {
+		authorID, err = uuid.Parse(authorIDString)
+		if err != nil {
+			respondWithError(w, http.StatusInternalServerError, "couldn't parse userID", err)
+			return
+		}
+	}
+
 	chirps := []Chirp{}
+
 	for _, dbChrip := range dbChirps {
+		if authorID != uuid.Nil && dbChrip.UserID != authorID {
+			continue
+		}
+
 		chirps = append(chirps, Chirp{
 			ID:        dbChrip.ID,
 			CreatedAt: dbChrip.CreatedAt,
